@@ -9,6 +9,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Display;
 import android.view.View;
 import android.view.Menu;
@@ -50,6 +51,9 @@ public class HomePage extends AppCompatActivity {
 
         if (requestCode == REQUEST_CAMERA) {
             Uri photoUri = data.getData();
+
+            if(data.getData() == null)
+                Log.d("1","data null");
 
 
             // Get the bitmap in according to the width of the device
