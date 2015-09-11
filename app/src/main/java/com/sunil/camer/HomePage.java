@@ -1,15 +1,28 @@
 package com.sunil.camer;
 
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.Point;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.view.Display;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ImageView;
+
+import com.desmond.squarecamera.CameraActivity;
+import com.desmond.squarecamera.ImageUtility;
 
 public class HomePage extends AppCompatActivity {
+
+    private static final int REQUEST_CAMERA = 0;
+
+    private Point mSize;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,27 +39,28 @@ public class HomePage extends AppCompatActivity {
                         .setAction("Action", null).show();
             }
         });
+        Display display = getWindowManager().getDefaultDisplay();
+        mSize = new Point();
+        display.getSize(mSize);
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_home_page, menu);
-        return true;
-    }
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (resultCode != RESULT_OK) return;
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
+        if (requestCode == REQUEST_CAMERA) {
+            Uri photoUri = data.getData();
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
+
+            // Get the bitmap in according to the width of the device
+            //Bitmap bitmap = ImageUtility.decodeSampledBitmapFromPath(photoUri.getPath(), mSize.x, mSize.x);
+            //((ImageView) findViewById(R.id.image)).setImageBitmap(bitmap);
         }
+        super.onActivityResult(requestCode, resultCode, data);
+    }
 
-        return super.onOptionsItemSelected(item);
+    public void launchCamera(View view) {
+        Intent startCustomCameraIntent = new Intent(this, CameraActivity.class);
+        startActivityForResult(startCustomCameraIntent, REQUEST_CAMERA);
     }
 }
