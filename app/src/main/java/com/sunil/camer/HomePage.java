@@ -54,11 +54,13 @@ public class HomePage extends AppCompatActivity {
 
             if(data.getData() == null)
                 Log.d("1","data null");
+            else
+                Log.d("1","data NOT null");
 
 
             // Get the bitmap in according to the width of the device
-            //Bitmap bitmap = ImageUtility.decodeSampledBitmapFromPath(photoUri.getPath(), mSize.x, mSize.x);
-            //((ImageView) findViewById(R.id.image)).setImageBitmap(bitmap);
+            Bitmap bitmap = ImageUtility.decodeSampledBitmapFromPath(photoUri.getPath(), mSize.x, mSize.x);
+            ((ImageView) findViewById(R.id.image)).setImageBitmap(bitmap);
         }
         super.onActivityResult(requestCode, resultCode, data);
     }
