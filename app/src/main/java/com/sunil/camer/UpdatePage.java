@@ -119,6 +119,7 @@ public class UpdatePage extends AppCompatActivity {
     }
 
 
+    // Add image info to realm DB
     public void addToDB(ImageInfo imageInfo) {
         Realm realm = Realm.getInstance(getApplicationContext());
         realm.beginTransaction();
@@ -189,7 +190,7 @@ public class UpdatePage extends AppCompatActivity {
                         if (isNetConnected())
                             getRxAddress(location);
                         else {
-                            Toast.makeText(context, "Couldn't lookup address", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(context, "Couldn't lookup address", Toast.LENGTH_LONG).show();
                             saveButton.setVisibility(View.GONE);
                             progressWheel.stopSpinning();
                             retryButton.setVisibility(View.VISIBLE);
@@ -217,7 +218,7 @@ public class UpdatePage extends AppCompatActivity {
                     @Override
                     public void onError(Throwable e) {
                         progressWheel.stopSpinning();
-                        Toast.makeText(context, "Couldn't lookup address", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(context, "Couldn't lookup address", Toast.LENGTH_LONG).show();
                         saveButton.setVisibility(View.GONE);
                         retryButton.setVisibility(View.VISIBLE);
                         cancelButton.setVisibility(View.VISIBLE);
