@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">CameR</string>
-    <string name="update_page">ADD IMAGE</string>
+    <string name="update_page">Add Image</string>
 
     <string name="action_settings">Settings</string>
+    <string name="title_activity_image_full">Image Info</string>
 </resources>

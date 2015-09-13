@@ -3,12 +3,12 @@ package com.sunil.camer;
 import io.realm.RealmObject;
 
 /**
- * Created by nuron on 12/09/15.
+ * Created by sunil on 12/09/15.
  */
 public class ImageInfo extends RealmObject {
     private String imagePath;
-    private String latitude;
-    private String longitude;
+    private double latitude;
+    private double longitude;
     private String address;
     private String updateTime;
 
@@ -20,19 +20,19 @@ public class ImageInfo extends RealmObject {
         this.imagePath = imagePath;
     }
 
-    public String getLatitude() {
+    public double getLatitude() {
         return latitude;
     }
 
-    public void setLatitude(String latitude) {
+    public void setLatitude(double latitude) {
         this.latitude = latitude;
     }
 
-    public String getLongitude() {
+    public double getLongitude() {
         return longitude;
     }
 
-    public void setLongitude(String longitude) {
+    public void setLongitude(double longitude) {
         this.longitude = longitude;
     }
 

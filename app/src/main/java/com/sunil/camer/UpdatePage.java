@@ -1,6 +1,7 @@
 package com.sunil.camer;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.location.Address;
 import android.location.Location;
 import android.net.ConnectivityManager;
@@ -10,8 +11,15 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import com.bumptech.glide.Glide;
+import com.google.android.gms.location.LocationRequest;
+import com.pnikosis.materialishprogress.ProgressWheel;
 
 import java.io.File;
 import java.math.RoundingMode;
@@ -21,6 +29,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
@@ -29,6 +38,7 @@ import io.realm.Realm;
 import pl.charmas.android.reactivelocation.ReactiveLocationProvider;
 import rx.Observable;
 import rx.Subscriber;
+import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
 
@@ -37,17 +47,28 @@ import rx.schedulers.Schedulers;
  */
 public class UpdatePage extends AppCompatActivity {
 
-    @Bind(R.id.textview)
+    private final int LOCATION_TIMEOUT_IN_SECONDS = 10;
+    @Bind(R.id.latLong_update_view)
     TextView locationView;
-    @Bind(R.id.address_view)
+    @Bind(R.id.address_update_view)
     TextView addressView;
-    @Bind(R.id.image)
+    @Bind(R.id.image_update_view)
     ImageView imageView;
     @Bind(R.id.toolbar)
     Toolbar toolbar;
+    @Bind(R.id.saveButton)
+    Button saveButton;
+    @Bind(R.id.retryButton)
+    Button retryButton;
+    @Bind(R.id.cancelButton)
+    Button cancelButton;
+    @Bind(R.id.progress_wheel)
+    ProgressWheel progressWheel;
     File file;
+    Context context;
+
+    Subscription locationSub, addressSub;
     private ImageInfo mImageInfo = new ImageInfo();
-    private int imageInfoValid = -1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,6 +77,13 @@ public class UpdatePage extends AppCompatActivity {
         ButterKnife.bind(this);
         setSupportActionBar(toolbar);
 
+        context = this;
+
+        saveButton.setClickable(false);
+        saveButton.setBackgroundColor(Color.parseColor("#BDC3C7"));
+        saveButton.setVisibility(View.VISIBLE);
+        retryButton.setVisibility(View.GONE);
+        cancelButton.setVisibility(View.GONE);
 
         String imagePath = getIntent().getExtras().getString("filePath");
 
@@ -63,9 +91,8 @@ public class UpdatePage extends AppCompatActivity {
             file = new File(imagePath);
 
         if (file.exists()) {
-
+            Glide.with(this).load(file).into(imageView);
             mImageInfo.setImagePath(imagePath);
-            imageView.setImageURI(Uri.fromFile(file));
             getRxLocation();
         }
     }
@@ -78,6 +105,19 @@ public class UpdatePage extends AppCompatActivity {
         addToDB(mImageInfo);
         finish();
     }
+
+
+    @OnClick(R.id.retryButton)
+    public void retryButtonClick() {
+        progressWheel.spin();
+        getRxLocation();
+    }
+
+    @OnClick(R.id.cancelButton)
+    public void cancelButtonClick() {
+        finish();
+    }
+
 
     public void addToDB(ImageInfo imageInfo) {
         Realm realm = Realm.getInstance(getApplicationContext());
@@ -102,24 +142,40 @@ public class UpdatePage extends AppCompatActivity {
     }
 
     private void getRxLocation() {
+
+
         ReactiveLocationProvider locationProvider = new ReactiveLocationProvider(this);
-        locationProvider.getLastKnownLocation()
-                .observeOn(Schedulers.newThread())
+
+        LocationRequest req = LocationRequest.create()
+                .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
+                .setExpirationDuration(TimeUnit.SECONDS.toMillis(LOCATION_TIMEOUT_IN_SECONDS))
+                .setInterval(5);
+
+
+        locationSub = locationProvider.getUpdatedLocation(req)
+                .timeout(LOCATION_TIMEOUT_IN_SECONDS, TimeUnit.SECONDS)
+                .first()
                 .observeOn(AndroidSchedulers.mainThread())
+                .subscribeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Subscriber<Location>() {
                     @Override
                     public void onCompleted() {
+
                     }
 
                     @Override
                     public void onError(Throwable e) {
+
+                        progressWheel.stopSpinning();
+                        Toast.makeText(context, "Couldn't get location", Toast.LENGTH_SHORT).show();
+                        saveButton.setVisibility(View.GONE);
+                        retryButton.setVisibility(View.VISIBLE);
+                        cancelButton.setVisibility(View.VISIBLE);
+                        locationView.setText("No Location found");
                     }
 
                     @Override
                     public void onNext(Location location) {
-
-                        if (location == null)
-                            return;
 
                         DecimalFormat formatter = new DecimalFormat("##.##", DecimalFormatSymbols.getInstance(Locale.ENGLISH));
                         formatter.setRoundingMode(RoundingMode.HALF_UP);
@@ -127,14 +183,19 @@ public class UpdatePage extends AppCompatActivity {
                         locationView.setText("Lat = " + formatter.format(location.getLatitude()) + " Long = "
                                 + formatter.format(location.getLongitude()));
 
-                        mImageInfo.setLatitude(String.valueOf(location.getLatitude()));
-                        mImageInfo.setLongitude(String.valueOf(location.getLongitude()));
+                        mImageInfo.setLatitude(location.getLatitude());
+                        mImageInfo.setLongitude(location.getLongitude());
 
                         if (isNetConnected())
                             getRxAddress(location);
-
+                        else {
+                            Toast.makeText(context, "Couldn't lookup address", Toast.LENGTH_SHORT).show();
+                            saveButton.setVisibility(View.GONE);
+                            progressWheel.stopSpinning();
+                            retryButton.setVisibility(View.VISIBLE);
+                            cancelButton.setVisibility(View.VISIBLE);
+                        }
                     }
-
                 });
     }
 
@@ -144,7 +205,8 @@ public class UpdatePage extends AppCompatActivity {
         Observable<List<Address>> reverseGeocodeObservable = locationProvider
                 .getReverseGeocodeObservable(location.getLatitude(), location.getLongitude(), 1);
 
-        reverseGeocodeObservable
+        addressSub = reverseGeocodeObservable
+                .timeout(LOCATION_TIMEOUT_IN_SECONDS, TimeUnit.SECONDS)
                 .subscribeOn(Schedulers.newThread())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Subscriber<List<Address>>() {
@@ -154,6 +216,12 @@ public class UpdatePage extends AppCompatActivity {
 
                     @Override
                     public void onError(Throwable e) {
+                        progressWheel.stopSpinning();
+                        Toast.makeText(context, "Couldn't lookup address", Toast.LENGTH_SHORT).show();
+                        saveButton.setVisibility(View.GONE);
+                        retryButton.setVisibility(View.VISIBLE);
+                        cancelButton.setVisibility(View.VISIBLE);
+                        addressView.setText("No address");
                     }
 
                     @Override
@@ -161,16 +229,32 @@ public class UpdatePage extends AppCompatActivity {
 
                         Address addressItem = addresses.get(0);
 
-                        String address = addressItem.getAddressLine(0) + ", "
-                                + addressItem.getLocality();
+                        String address = addressItem.getAddressLine(0) + ", " + addressItem.getAddressLine(1);
 
                         mImageInfo.setAddress(address);
-
                         addressView.setText(address);
+                        progressWheel.stopSpinning();
+
+                        retryButton.setVisibility(View.GONE);
+                        cancelButton.setVisibility(View.GONE);
+                        saveButton.setVisibility(View.VISIBLE);
+                        saveButton.setBackgroundColor(Color.parseColor("#1BBC9B"));
+                        saveButton.setClickable(true);
 
                     }
                 });
     }
     //endregion
+
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (locationSub != null && !locationSub.isUnsubscribed())
+            locationSub.unsubscribe();
+
+        if (addressSub != null && !addressSub.isUnsubscribed())
+            addressSub.unsubscribe();
+    }
 
 }
