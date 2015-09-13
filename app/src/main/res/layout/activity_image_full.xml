@@ -39,6 +39,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_alignParentTop="true"
+                android:layout_marginTop="8dp"
                 app:layout_heightPercent="85%" />
 
             <TextView

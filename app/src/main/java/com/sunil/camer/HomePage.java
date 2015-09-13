@@ -10,6 +10,9 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.widget.Toast;
 
+import com.sunil.camer.Adapter.ImageInfoRecyclerAdapter;
+import com.sunil.camer.Model.ImageInfo;
+
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;

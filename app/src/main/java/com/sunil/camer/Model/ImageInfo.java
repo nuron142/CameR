@@ -1,4 +1,4 @@
-package com.sunil.camer;
+package com.sunil.camer.Model;
 
 import io.realm.RealmObject;
 

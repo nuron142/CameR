@@ -1,9 +1,7 @@
-package com.sunil.camer;
+package com.sunil.camer.Adapter;
 
 import android.content.Context;
 import android.content.Intent;
-import android.media.Image;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -13,6 +11,9 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
+import com.sunil.camer.ImageFullActivity;
+import com.sunil.camer.Model.ImageInfo;
+import com.sunil.camer.R;
 
 import java.io.File;
 import java.math.RoundingMode;
@@ -24,7 +25,6 @@ import java.util.Locale;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
-import butterknife.OnClick;
 
 /**
  * Created by sunil on 12/09/15.
